@@ -11,6 +11,12 @@ typedef enum
     STRING_ELEM,
 } vtype_tree_t;
 
+typedef enum
+{
+    BLACK,
+    RED,
+} node_color;
+
 typedef union
 {
     int64_t decimal;
@@ -25,6 +31,7 @@ typedef struct tree_node
         value_tree_t key;
         value_tree_t value;
     } data;
+    node_color color;
     struct tree_node *left;
     struct tree_node *right;
     struct tree_node *parent;
