@@ -6,11 +6,11 @@
 static tree_node *_new_node(vtype_tree_t tkey, vtype_tree_t tvalue, void *key, void *value);
 static void _set_key(tree_node *node, vtype_tree_t tkey, void *key);
 static void _set_value(tree_node *node, vtype_tree_t tvalue, void *value);
-/*changed void->tree_node* */static tree_node *_set_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue, void *key, void *value);
+/*changed void->tree_node* */ static tree_node *_set_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue, void *key, void *value);
 static tree_node *_get_tree(tree_node *node, vtype_tree_t tkey, void *key);
 
 static tree_node *del1_tree(Tree *tree, vtype_tree_t tkey, void *key);
-static void *del2_tree(Tree *tree, tree_node *node);
+static void _del2_tree(Tree *tree, tree_node *node);
 static void _del3_tree(tree_node *node);
 static void _free_tree(tree_node *node);
 
@@ -20,42 +20,172 @@ static tree_node *_get_uncle(tree_node *node);
 static void _right_rotate(tree_node *node);
 static void _left_rotate(tree_node *node);
 
-void _balance_tree(Tree *tree, tree_node *node);
-void _insert_case1(tree_node *node);
-void _insert_case2(tree_node *node);
-void _insert_case3(tree_node *node);
-void _insert_case4(tree_node *node);
-void _insert_case5(tree_node *node);
+static void _balance_tree(Tree *tree, tree_node *node);
+static void _insert_case1(tree_node *node);
+static void _insert_case2(tree_node *node);
+static void _insert_case3(tree_node *node);
+static void _insert_case4(tree_node *node);
+static void _insert_case5(tree_node *node);
 
 static void _print_tree_elem(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue);
 static void _print_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue);
 static void _print_tree_as_list(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue);
 
-/*
-int main(void){
+void printTreeUtil(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue, int space);
+void printTree(Tree *root);
+
+//================================
+/** 
+typedef struct Hashtab
+{
+    struct {
+        vtype_tree_t key;
+        vtype_tree_t value;
+    } type;
+    size_t size;
+    Tree **table;
+} Hashtab;
+
+Hashtab *new_hashtab(size_t size, vtype_tree_t key, vtype_tree_t value) {
+    switch(key){
+        case DECIMAL_ELEM: case STRING_ELEM:
+            break;
+        default:
+            fprintf(stderr, "%s\n", "key type not supported");
+            return NULL;
+    }
+    switch(value) {
+        case DECIMAL_ELEM: case REAL_ELEM: case STRING_ELEM:
+            break;
+        default:
+            fprintf(stderr, "%s\n", "value type not supported");
+            return NULL;
+    }
+    Hashtab *hashtab = (Hashtab*)malloc(sizeof(Hashtab));
+    hashtab->table = (Tree**)malloc(size * sizeof(Tree));
+    for (size_t i = 0; i < size; ++i) {
+        hashtab->table[i] = new_tree(key, value);
+    }
+    hashtab->size = size;
+    hashtab->type.key = key;
+    hashtab->type.value = value;
+    return hashtab;
+}
+
+
+uint32_t _strhash(uint8_t *s, size_t size)
+{
+    uint32_t hashval;
+    for (hashval = 0; *s != '\0'; ++s){
+        hashval = *s + 31 * hashval;
+    }
+    printf("\n{%d}\n", hashval  % size);
+    return hashval % size;
+}
+
+void set_hashtab(Hashtab *hashtab, void *key, void *value)
+{
+    uint32_t hash;
+    switch (hashtab->type.key)
+    {
+    case DECIMAL_ELEM:
+        hash = (uint64_t)key % hashtab->size;
+        break;
+
+    case STRING_ELEM:
+        hash = _strhash((uint8_t *)key, hashtab->size);
+        break;
+    }
+    // printf("%d",hashtab->size);
+    set_tree(hashtab->table[hash], key, value);
+}
+
+extern void print_hashtab(Hashtab *hashtab)
+{
+
+    printf("{\n");
+    for (size_t i = 0; i < hashtab->size; ++i)
+    {
+        if (hashtab->table[i]->node == NULL)
+        {
+            continue;
+        }
+        // switch(hashtab->type.key) {
+        //  case DECIMAL_ELEM:
+        //      hash = hashtab->table[i]->node->data.key.decimal % hashtab->size;
+        //  break;
+        //  case STRING_ELEM:
+        //      hash = _strhash(hashtab->table[i]->node->data.key.string, hashtab->size);
+        //      printf("%d - %d\n", i, hash);
+        //  break;
+        // }
+        printf("\t%d => ", i);
+        print_tree_as_list(hashtab->table[i]);
+    }
+    printf("}\n");
+}
+
+//================================
+
+int main(void)
+{
 
     printf("Start\n");
 
-    Tree *tree = new_tree(DECIMAL_ELEM, STRING_ELEM);
+    Hashtab *hashtab = new_hashtab(10, DECIMAL_ELEM, STRING_ELEM);
+    //(Hashtab*)malloc(sizeof(Hashtab));
+    //hashtab->table = (Tree**)malloc(2 * sizeof(Tree));
+    
+    //hashtab->size = size;
+    //hashtab->type.key = key;
+    //hashtab->type.value = value;
 
-     printf("Tree init\n");
+    //Tree** table = (Tree**)malloc(2 * sizeof(Tree));
+    //for (size_t i = 0; i < 2; ++i) {
+    //    hashtab->table[i] = new_tree(DECIMAL_ELEM, STRING_ELEM);
+    //}
 
-    set_tree(tree, decimal(50), string("F"));
-    set_tree(tree, decimal(55), string("I"));
-    set_tree(tree, decimal(40), string("O"));
-    set_tree(tree, decimal(70), string("N"));
-    set_tree(tree, decimal(69), string("A"));
+    //Tree *tree = new_tree(DECIMAL_ELEM, STRING_ELEM);
 
-    value_tree_t v = get_tree(tree, decimal(50));
+    printf("Tree init - \n");
 
-    printf("%d\n", in_tree(tree, decimal(50)));
+    
+    set_tree(hashtab->table[0], decimal(50), string("F"));
+    set_tree(hashtab->table[1], decimal(55), string("I"));
+    set_tree(hashtab->table[0], decimal(40), string("O"));
+    set_tree(hashtab->table[1], decimal(70), string("N"));
+    set_tree(hashtab->table[0], decimal(65), string("A"));
+    set_tree(hashtab->table[1], decimal(75), string("R"));
+    set_tree(hashtab->table[0], decimal(60), string("U"));
+    set_tree(hashtab->table[1], decimal(59), string("V"));
 
-    print_tree(tree);
-    free_tree(tree);
+    set_hashtab(hashtab, decimal(50), string("F"));
+    set_hashtab(hashtab, decimal(55), string("I"));
+    set_hashtab(hashtab, decimal(40), string("O"));
+    set_hashtab(hashtab, decimal(70), string("N"));
+    set_hashtab(hashtab, decimal(65), string("A"));
+    set_hashtab(hashtab, decimal(75), string("R"));
+    set_hashtab(hashtab, decimal(60), string("U"));
+    set_hashtab(hashtab, decimal(59), string("V"));
+    //printf("Tree init\n");
+
+    //value_tree_t v = get_tree(table[0], decimal(50));
+
+    //printf("%d\n", in_tree(table[0], decimal(50)));
+
+    // print_tree(tree);
+    // print_tree_as_list(tree);
+    //printTree(hashtab->table[0]);
+    //printTree(hashtab->table[1]);
+
+    print_hashtab(hashtab);
+
+    free_tree(hashtab->table[0]);
     system("pause");
     return 0;
-}*/
+}
 
+*/
 extern Tree *new_tree(vtype_tree_t key, vtype_tree_t value)
 {
     switch (key)
@@ -105,13 +235,15 @@ extern _Bool in_tree(Tree *tree, void *key)
 
 extern void set_tree(Tree *tree, void *key, void *value)
 {
+    //printf("bt.c120");
     if (tree->node == NULL)
     {
         tree->node = _new_node(tree->type.key, tree->type.value, key, value);
+        _balance_tree(tree, tree->node);
         return;
     }
     tree_node *inserted_node = _set_tree(tree->node, tree->type.key, tree->type.value, key, value);
-    _balance_tree(tree, inserted_node);//not checked!!!
+    _balance_tree(tree, inserted_node); // not checked!!!
 }
 
 extern void *decimal(uint64_t x)
@@ -160,10 +292,10 @@ extern void del_tree(Tree *tree, void *key)
     }
     if (node->left != NULL && node->right != NULL)
     {
-        _del_tree(node);
+        _del3_tree(node); //
         return;
     }
-    _del2_tree(node);
+    _del2_tree(tree, node);
 }
 
 static tree_node *del1_tree(Tree *tree, vtype_tree_t tkey, void *key)
@@ -195,7 +327,7 @@ static tree_node *del1_tree(Tree *tree, vtype_tree_t tkey, void *key)
     return NULL;
 }
 
-static void *del2_tree(Tree *tree, tree_node *node)
+static void _del2_tree(Tree *tree, tree_node *node)
 {
     tree_node *parent = node->parent;
     tree_node *temp;
@@ -302,7 +434,7 @@ tree_node *_get_grandparent(tree_node *node)
 
 tree_node *_get_uncle(tree_node *node)
 {
-    tree_node *grandparent = get_grandparent(node);
+    tree_node *grandparent = _get_grandparent(node);
     if (grandparent == NULL)
     {
         return NULL;
@@ -346,7 +478,7 @@ void _right_rotate(tree_node *node)
 
 void _left_rotate(tree_node *node)
 {
-    tree_node *pivot = node->parent;
+    tree_node *pivot = node->right;
 
     pivot->parent = node->parent;
     if (node->parent != NULL)
@@ -373,41 +505,60 @@ void _left_rotate(tree_node *node)
 
 static void _print_tree_as_list(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue)
 {
+    //printf(" [%s => ", "bt.c_394");
     if (node == NULL)
     {
         return;
     }
+    //printf(" [%s => ", "bt.c_399");
     _print_tree_as_list(node->left, tkey, tvalue);
+    //printf(" [%s => ", "bt.c_400");
     _print_tree_elem(node, tkey, tvalue);
+    //printf(" [%s => ", "bt.c_400");
     _print_tree_as_list(node->right, tkey, tvalue);
 }
 
 void _balance_tree(Tree *tree, tree_node *node)
 {
-    if (node == tree->node){
+    if (node == tree->node)
+    {
         _insert_case1(node);
         return;
     }
-    if (node->parent->color == BLACK){
+
+    if (node->parent->color == BLACK)
+    {
         _insert_case2(node);
         return;
     }
     tree_node *uncle = _get_uncle(node);
-    if ((node->parent->color == RED) && (uncle->color == RED)){
-        _insert_case3(node);
-        return;
+    if (uncle != NULL)
+    {
+        if ((node->parent->color == RED) && (uncle->color == RED))
+        { // проверка uncle на NULL?
+            _insert_case3(node);
+            return;
+        }
     }
     tree_node *grandparent = _get_grandparent(node);
-    if ((node->parent->color == RED) && (uncle->color == BLACK) && (node == node->parent->right) && (node->parent == grandparent->left)){
+    // printf(" -4if%d-\n ", uncle->color);
+    if ((node->parent->color == RED) && (uncle == NULL || uncle->color == BLACK) && (node == node->parent->right) && (node->parent == grandparent->left))
+    {
+        // printf(" -4if%d-\n ", node->color);
         _insert_case4(node);
+        return;
     }
-    if ((node->parent->color == RED) && (uncle->color == BLACK) && (node == node->parent->left) && (node->parent == grandparent->left)){
+
+    if ((node->parent->color == RED) && (uncle == NULL || uncle->color == BLACK) && (node == node->parent->left) && (node->parent == grandparent->left))
+    {
         _insert_case5(node);
+        return;
     }
 }
 
 void _insert_case1(tree_node *node)
 {
+    ///printf(" -1b%d-\n ", node->color);
     if (node->parent == NULL)
     {
         node->color = BLACK;
@@ -416,10 +567,17 @@ void _insert_case1(tree_node *node)
     {
         _insert_case2(node);
     }
+    //printf(" -1%d-\n ", node->color);
 }
 
 void _insert_case2(tree_node *node)
 {
+    //printf(" -2b%d-\n ", node->color);
+    //printf("bt.c455");
+
+    if(node == NULL){
+        //printf("bt.c458 nodeIsNULL");
+    }
     if (node->parent->color == BLACK)
     {
         return;
@@ -428,10 +586,12 @@ void _insert_case2(tree_node *node)
     {
         _insert_case3(node);
     }
+    //printf(" -2%d-\n ", node->color);
 }
 
 void _insert_case3(tree_node *node)
 {
+    //printf(" -3b%d-\n ", node->color);
     tree_node *uncle = _get_uncle(node), *grandparent;
 
     if ((uncle != NULL) && (uncle->color == RED))
@@ -446,10 +606,12 @@ void _insert_case3(tree_node *node)
     {
         _insert_case4(node);
     }
+    //printf(" -3%d-\n ", node->color);
 }
 
 void _insert_case4(tree_node *node)
 {
+    //printf(" -4b%d-\n ", node->color);
     tree_node *grandparent = _get_grandparent(node);
 
     if ((node == node->parent->right) && (node->parent == grandparent->left))
@@ -464,10 +626,12 @@ void _insert_case4(tree_node *node)
     }
 
     _insert_case5(node);
+    //printf(" -4%d-\n ", node->color);
 }
 
 void _insert_case5(tree_node *node)
 {
+    //printf(" -5b%d-\n ", node->color);
     tree_node *grandparent = _get_grandparent(node);
 
     node->parent->color = BLACK;
@@ -480,14 +644,18 @@ void _insert_case5(tree_node *node)
     {
         _left_rotate(grandparent);
     }
+    //printf(" -5%d-\n ", node->color);
 }
 
 static void _print_tree_elem(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue)
 {
+    //printf(" [%s => ", "bt.c_563");
     switch (tkey)
     {
+        
     case DECIMAL_ELEM:
         printf(" [%d => ", node->data.key.decimal);
+        //printf(" -%d- ", node->color);
         switch (tvalue)
         {
         case DECIMAL_ELEM:
@@ -503,6 +671,7 @@ static void _print_tree_elem(tree_node *node, vtype_tree_t tkey, vtype_tree_t tv
         break;
     case STRING_ELEM:
         printf(" ['%s' => ", node->data.key.string);
+        //printf(" -%d- ", node->color);
         switch (tvalue)
         {
         case DECIMAL_ELEM:
@@ -517,6 +686,37 @@ static void _print_tree_elem(tree_node *node, vtype_tree_t tkey, vtype_tree_t tv
         }
         break;
     }
+}
+void printTreeUtil(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue, int space)
+{
+
+    if (node == NULL)
+        return;
+    int spacing = 5;
+    space += spacing;
+
+    printTreeUtil(node->right, tkey, tvalue, space);
+    printf("\n");
+    for (int i = spacing; i < space; i++)
+    {
+        printf(" ");
+    }
+    // printf("%d\n", root->data);
+    _print_tree_elem(node, tkey, tvalue);
+
+    printTreeUtil(node->left, tkey, tvalue, space);
+}
+
+void printTree(Tree *tree)
+{
+    if (tree->node == NULL)
+    {
+        printf("Tree is empty!\n");
+        return;
+    }
+    printf("Vertical visualisaton:\n");
+    printTreeUtil(tree->node, tree->type.key, tree->type.value, 10);
+    printf("\n");
 }
 
 static void _print_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue)
@@ -534,9 +734,9 @@ static void _print_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue)
 }
 
 //*
-static tree_node *set_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue, void *key, void *value)
+static tree_node *_set_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tvalue, void *key, void *value)
 {
-    tree_node *inserted_node = node;
+    tree_node *inserted_node; // = node;
     switch (tkey)
     {
     case DECIMAL_ELEM:
@@ -546,10 +746,11 @@ static tree_node *set_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tval
             {
                 node->right = _new_node(tkey, tvalue, key, value);
                 node->right->parent = node;
+                inserted_node = node->right;
             }
             else
             {
-                _set_tree(node->right, tkey, tvalue, key, value);
+                inserted_node = _set_tree(node->right, tkey, tvalue, key, value);
             }
         }
         else if ((uint64_t)key < node->data.key.decimal)
@@ -558,10 +759,11 @@ static tree_node *set_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tval
             {
                 node->left = _new_node(tkey, tvalue, key, value);
                 node->left->parent = node;
+                inserted_node = node->left;
             }
             else
             {
-                _set_tree(node->left, tkey, tvalue, key, value);
+                inserted_node = _set_tree(node->left, tkey, tvalue, key, value);
             }
         }
         else
@@ -577,10 +779,11 @@ static tree_node *set_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tval
             {
                 node->right = _new_node(tkey, tvalue, key, value);
                 node->right->parent = node;
+                inserted_node = node->right;
             }
             else
             {
-                _set_tree(node->right, tkey, tvalue, key, value);
+                inserted_node = _set_tree(node->right, tkey, tvalue, key, value);
             }
         }
         else if (condition < 0)
@@ -589,10 +792,11 @@ static tree_node *set_tree(tree_node *node, vtype_tree_t tkey, vtype_tree_t tval
             {
                 node->left = _new_node(tkey, tvalue, key, value);
                 node->left->parent = node;
+                inserted_node = node->left;
             }
             else
             {
-                _set_tree(node->left, tkey, tvalue, key, value);
+                inserted_node = _set_tree(node->left, tkey, tvalue, key, value);
             }
         }
         else
@@ -611,8 +815,8 @@ static tree_node *_new_node(vtype_tree_t tkey, vtype_tree_t tvalue, void *key, v
     node->color = RED;
     _set_key(node, tkey, key);
     _set_value(node, tvalue, value);
-    node->left = NULL;
-    node->left = NULL;
+    node->parent = NULL;
+    node->right = NULL;
     node->left = NULL;
     return node;
 }

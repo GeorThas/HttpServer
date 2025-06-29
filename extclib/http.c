@@ -17,13 +17,13 @@ typedef struct HTTP {
     int32_t len;
     int32_t cap;
     void(**funcs)(int, HTTPreq*); //массив функций
-    HashTab *tab;
+    Hashtab *tab;
 } HTTP;
 
 static HTTPreq _new_request(void);
 static void _null_request(HTTPreq *request);
 static void _parse_request(HTTPreq *request, char *buffer, size_t size);
-static void _switch_http(HTTP *http, int conn, HTTPreq *request);
+static int8_t _switch_http(HTTP *http, int conn, HTTPreq *request);
 static void _page404_http(int conn);
 
 extern HTTP *new_http(char *address){
@@ -32,7 +32,7 @@ extern HTTP *new_http(char *address){
     http->len = 0;
     http->host = (char*)malloc(sizeof(char) * strlen(address) + 1);
     strcpy(http->host, address);
-    http->tab = new_hashtab(http->cap, STRING_TYPE, DECIMAL_TYPE);
+    http->tab = new_hashtab(http->cap, STRING_ELEM, DECIMAL_ELEM);
     http->funcs = (void(**)(int, HTTPreq*))malloc(http->cap * sizeof(void(*)(int, HTTPreq*)));
 }
 
@@ -43,7 +43,7 @@ extern void free_http(HTTP *http){
     free(http);
 }
 
-extern void handle_http(HTTP *http, char path, void(*handle)(int, HTTPreq*)){
+extern void handle_http(HTTP *http, char* path, void(*handle)(int, HTTPreq*)){
     set_hashtab(http->tab, string(path), decimal(http->len));
     http->funcs[http->len] = handle;
     http->len += 1;
@@ -51,9 +51,8 @@ extern void handle_http(HTTP *http, char path, void(*handle)(int, HTTPreq*)){
         http->cap <<= 1;
         http->funcs = (void(**)(int, HTTPreq*))realloc(http->funcs, http->cap * sizeof(void(*)(int, HTTPreq)));
     }
+     printf("handlehttp\n");
 }
-
-
 
 extern int8_t listen_http(HTTP *http)
 {
@@ -111,37 +110,37 @@ static HTTPreq _new_request(void){
 }
 
 static void _parse_request(HTTPreq *request, char *buffer, size_t size){
-    print("%s\n", buffer);
-    for(size_t i = 0; i < size; ++i){
-        switch(request->state){
-            case 0:
-                if(buffer[i] == ' ' || request->index == METHOD_SIZE-1){
-                    request->method[request->index] = '\0';
-                    _nullrequest(request);
-                    continue;
-                }
-                request->method[request->index] = buffer[i];
-            break;
-            case 1:
-                if(buffer[i] == ' ' || request->index == PATH_SIZE-1){
-                    request->path[request->index] = '\0';
-                    _nullrequest(request);
-                    continue;
-                }
-                request->path[request->index] = buffer[i];
-            break;
-            case 2:
-                if(buffer[i] == '\n' || request->index == PROTO_SIZE-1){
-                    request->proto[request->index] = '\0';
-                    _nullrequest(request);
-                    continue;
-                }
-                request->proto[request->index] = buffer[i];
-
-            break;
-            default: return;
-        }
-    }
+    printf("%s\n", buffer);
+   for (size_t i = 0; i < size; ++i) {
+		switch(request->state) {
+			case 0:
+				if (buffer[i] == ' ' || request->index == METHOD_SIZE-1) {
+					request->method[request->index] = '\0';
+					_null_request(request);
+					continue;
+				}
+				request->method[request->index] = buffer[i];
+			break;
+			case 1:
+				if (buffer[i] == ' ' || request->index == PATH_SIZE-1) {
+					request->path[request->index] = '\0';
+					_null_request(request);
+					continue;
+				}
+				request->path[request->index] = buffer[i];
+			break;
+			case 2:
+				if (buffer[i] == '\n' || request->index == PROTO_SIZE-1) {
+					request->proto[request->index] = '\0';
+					_null_request(request);
+					continue;
+				}
+				request->proto[request->index] = buffer[i];
+			break;
+			default: return;
+		}
+		request->index += 1;
+	}
 }
 
 static void _null_request(HTTPreq *request){
@@ -149,7 +148,7 @@ static void _null_request(HTTPreq *request){
     request->index = 0;
 } 
 
-static void _switch_http(HTTP *http, int conn, HTTPreq *request){
+static int8_t _switch_http(HTTP *http, int conn, HTTPreq *request){
 
     char buffer[PATH_SIZE];
     memcpy(buffer, request->path, PATH_SIZE);

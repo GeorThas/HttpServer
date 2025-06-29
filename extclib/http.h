@@ -17,7 +17,7 @@ typedef struct HTTPreq{
 extern HTTP *new_http(char *address);
 extern void free_http(HTTP *http);
 
-extern void handle_http(HTTP *http, char, void(*)(int, HTTPreq*));
+extern void handle_http(HTTP *http, char *path, void(*handle)(int, HTTPreq*));
 extern int8_t listen_http(HTTP *http);
 
 extern void parsehtml_http(int conn, char *filename);
