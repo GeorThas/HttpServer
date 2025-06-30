@@ -20,6 +20,8 @@ int main(void) {
 
 void index_page(int conn, HTTPreq *req) {
     //parsehtml_http(conn, "page404.html");
+	int num = strcmp(req->path, "/");
+	printf("errorIndex %d\n", num);
 	if(strcmp(req->path, "/") != 0) {
         printf("error\n");
 		parsehtml_http(conn, "page404.html");
@@ -29,6 +31,8 @@ void index_page(int conn, HTTPreq *req) {
 }
 
 void about_page(int conn, HTTPreq *req) {
+	int num = strcmp(req->path, "/about/");
+	printf("errorAbout %d\n", num);
 	if(strcmp(req->path, "/about/") != 0) {
         printf("error\n");
 		parsehtml_http(conn, "page404.html");

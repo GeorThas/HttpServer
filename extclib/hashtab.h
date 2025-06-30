@@ -2,7 +2,8 @@
 
 typedef struct Hashtab
 {
-    struct {
+    struct
+    {
         vtype_tree_t key;
         vtype_tree_t value;
     } type;
@@ -22,14 +23,13 @@ extern void print_hashtab(Hashtab *hashtab);
 
 static uint32_t _strhash(uint8_t *s, size_t size);
 
-
-
 uint32_t _strhash(uint8_t *s, size_t size) //?!
 {
     uint32_t hashval;
-    for (hashval = 0; *s != '\0'; ++s){
+    for (hashval = 0; *s != '\0'; ++s)
+    {
         hashval = *s + 31 * hashval;
     }
-    //printf("\n{%d}\n", hashval  % size);
+    // printf("\n{%d}\n", hashval  % size);
     return hashval % size;
 }
